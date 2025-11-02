@@ -1,0 +1,16 @@
+# Python-spezifische Ignorierungen
+__pycache__/
+*.pyc
+*.pyo
+*.pyd
+
+# Umgebungs- und Konfigurationsdateien
+.env
+
+# Docker-spezifische Ignorierungen
+.dockerignore
+
+# IDE-spezifische Ordner
+.vscode/
+.idea/
+

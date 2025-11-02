@@ -1,0 +1,35 @@
+version: '3.8'
+
+services:
+  monica-proxy:
+    # Der Name des Containers, um ihn leichter zu verwalten.
+    container_name: monica-proxy
+    
+    # Baut das Image aus dem Dockerfile im aktuellen Verzeichnis.
+    build:
+      context: .
+      dockerfile: Dockerfile
+      
+    # Startet den Container automatisch neu, es sei denn, er wird manuell gestoppt.
+    restart: unless-stopped
+    
+    # Der Befehl, der beim Starten des Containers ausgeführt wird.
+    # Die App im Container lauscht auf Port 5001.
+    command: ["python", "monica_proxy.py", "--port", "5001"]
+    # Für die Fehlersuche können Sie diesen Befehl verwenden:
+    # command: ["python", "monica_proxy.py", "--port", "5001", "--debug"]
+
+    # Mappt die lokale `models.json` in den Container.
+    # Dies stellt sicher, dass Ihre Model-Liste von außen verwaltet werden kann.
+    volumes:
+      # <Pfad auf dem Host>:<Pfad im Container>:<Zugriffsmodus>
+      - ./models.json:/app/models.json:ro
+
+    # Veröffentlicht den Port des Containers auf dem Host-System.
+    # Der Proxy wird über die IP Ihres Servers und diesen Port erreichbar sein.
+    ports:
+      # <Host-Port>:<Container-Port>
+      - "5001:5001"
+
+# In dieser Konfiguration sind keine externen Netzwerke wie das von Traefik erforderlich.
+
