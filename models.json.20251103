@@ -1,0 +1,170 @@
+{
+    "data": [
+        {
+            "id": "gpt-5",
+            "object": "model",
+            "owned_by": "openai"
+        },
+        {
+            "id": "gpt-4o",
+            "object": "model",
+            "owned_by": "openai"
+        },
+        {
+            "id": "gpt-4o-mini",
+            "object": "model",
+            "owned_by": "openai"
+        },
+        {
+            "id": "gpt-4-5",
+            "object": "model",
+            "owned_by": "openai"
+        },
+        {
+            "id": "gpt-4.1",
+            "object": "model",
+            "owned_by": "openai"
+        },
+        {
+            "id": "gpt-4.1-mini",
+            "object": "model",
+            "owned_by": "openai"
+        },
+        {
+            "id": "gpt-4.1-nano",
+            "object": "model",
+            "owned_by": "openai"
+        },
+        {
+            "id": "claude-sonnet-4-5",
+            "object": "model",
+            "owned_by": "anthropic"
+        },
+        {
+            "id": "claude-4-sonnet",
+            "object": "model",
+            "owned_by": "anthropic"
+        },
+        {
+            "id": "claude-4-sonnet-thinking",
+            "object": "model",
+            "owned_by": "anthropic"
+        },
+        {
+            "id": "claude-4-opus",
+            "object": "model",
+            "owned_by": "anthropic"
+        },
+        {
+            "id": "claude-4-opus-thinking",
+            "object": "model",
+            "owned_by": "anthropic"
+        },
+        {
+            "id": "claude-opus-4-1-20250805-thinking",
+            "object": "model",
+            "owned_by": "anthropic"
+        },
+        {
+            "id": "claude-3-7-sonnet-thinking",
+            "object": "model",
+            "owned_by": "anthropic"
+        },
+        {
+            "id": "claude-3-7-sonnet",
+            "object": "model",
+            "owned_by": "anthropic"
+        },
+        {
+            "id": "claude-3-5-sonnet",
+            "object": "model",
+            "owned_by": "anthropic"
+        },
+        {
+            "id": "claude-3-5-haiku",
+            "object": "model",
+            "owned_by": "anthropic"
+        },
+        {
+            "id": "gemini-2.5-pro",
+            "object": "model",
+            "owned_by": "google"
+        },
+        {
+            "id": "gemini-2.5-flash",
+            "object": "model",
+            "owned_by": "google"
+        },
+        {
+            "id": "gemini-2.0-flash",
+            "object": "model",
+            "owned_by": "google"
+        },
+        {
+            "id": "gemini-1",
+            "object": "model",
+            "owned_by": "google"
+        },
+        {
+            "id": "o1-preview",
+            "object": "model",
+            "owned_by": "openai"
+        },
+        {
+            "id": "o3",
+            "object": "model",
+            "owned_by": "openai"
+        },
+        {
+            "id": "o3-mini",
+            "object": "model",
+            "owned_by": "openai"
+        },
+        {
+            "id": "o4-mini",
+            "object": "model",
+            "owned_by": "openai"
+        },
+        {
+            "id": "deepseek-reasoner",
+            "object": "model",
+            "owned_by": "deepseek"
+        },
+        {
+            "id": "deepseek-chat",
+            "object": "model",
+            "owned_by": "deepseek"
+        },
+        {
+            "id": "deepclaude",
+            "object": "model",
+            "owned_by": "system"
+        },
+        {
+            "id": "sonar",
+            "object": "model",
+            "owned_by": "perplexity"
+        },
+        {
+            "id": "sonar-reasoning-pro",
+            "object": "model",
+            "owned_by": "perplexity"
+        },
+        {
+            "id": "grok-3-beta",
+            "object": "model",
+            "owned_by": "xai"
+        },
+        {
+            "id": "grok-4",
+            "object": "model",
+            "owned_by": "xai"
+        },
+        {
+            "id": "grok-code-fast-1",
+            "object": "model",
+            "owned_by": "xai"
+        }
+    ]
+}
+

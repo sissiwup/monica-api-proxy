@@ -27,9 +27,9 @@ PORT_TARGET_MAP = {
     # Host-Port : Ziel-URL
     "5001": "https://openapi.monica.im",
     # zusätzlicher Host-Port, der auf Ihr gewünschtes Ziel weiterleitet
-    "5002": "https://api.openai.com",
-    # Google API Port
-    "5003": "https://generativelanguage.googleapis.com",
+    "5002": "http://192.168.1.13:5678/webhook",
+    # Beispiel zweiter Port
+    # "5002": "https://openapi-alternative.example",
 }
 
 # 3. Lade die Model-Liste aus einer externen JSON-Datei
@@ -81,82 +81,12 @@ except Exception as e:
 
 @app.route('/v1/models', methods=['GET'])
 def get_models():
-    # Bestimme eingehenden Port
-    host_header = request.headers.get('Host', '')
-    incoming_port = None
-    if ':' in host_header:
-        try:
-            incoming_port = host_header.split(':')[-1]
-        except Exception:
-            incoming_port = None
-    # Fallback: SERVER_PORT (z.B. innerhalb des Containers)
-    if not incoming_port:
-        incoming_port = str(request.environ.get('SERVER_PORT', ''))
-    
-    # Nur für Port 5001 die spezielle Antwort senden
-    if incoming_port == "5001":
-        log("Anfrage an /v1/models über Port 5001 empfangen. Spezielle Antwort wird gesendet.")
-        return jsonify(MODELS_RESPONSE)
-    elif incoming_port == "5003":
-        # Google API hat keine direkte Entsprechung für /v1/models
-        # Wir senden eine minimale Antwort mit den verfügbaren Google-Modellen
-        log("Anfrage an /v1/models über Google API Port 5003 empfangen. Spezielle Google-Modell-Liste wird gesendet.")
-        
-        # Extrahiere den API-Schlüssel aus dem Authorization-Header
-        auth_header = request.headers.get('Authorization', '')
-        api_key = None
-        if auth_header and auth_header.startswith('Bearer '):
-            api_key = auth_header.split(' ')[1]
-            log("API-Schlüssel aus Authorization-Header extrahiert")
-            
-        # Anfrage an Google API senden um verfügbare Modelle zu erhalten
-        google_url = "https://generativelanguage.googleapis.com/v1beta/models"
-        headers = {}
-        
-        # Wenn ein API-Schlüssel vorhanden ist, verwenden wir ihn als URL-Parameter
-        url_with_key = google_url
-        if api_key:
-            url_with_key = f"{google_url}?key={api_key}"
-            log("Google API-Schlüssel als URL-Parameter gesetzt")
-        
-        try:
-            # Versuche, die Modelle von Google abzurufen
-            resp = requests.get(
-                url=url_with_key,
-                headers=headers,
-                timeout=10
-            )
-            
-            if resp.status_code == 200:
-                # Transformiere die Google-Antwort in OpenAI-Format
-                google_models = resp.json().get('models', [])
-                openai_format_models = {
-                    "data": [{"id": model.get('name', '').split('/')[-1]} for model in google_models]
-                }
-                return jsonify(openai_format_models)
-            else:
-                log(f"Fehler beim Abrufen der Google-Modelle: {resp.status_code}")
-        except Exception as e:
-            log(f"Fehler bei der Anfrage an Google API: {e}")
-        
-        # Fallback: Standard-Modell-Liste für Google
-        return jsonify({
-            "data": [
-                {"id": "gemini-pro"},
-                {"id": "gemini-pro-vision"},
-                {"id": "gemini-ultra"}
-            ]
-        })
-    else:
-        # Für alle anderen Ports den normalen Proxy verwenden
-        log(f"Anfrage an /v1/models über Port {incoming_port} empfangen. Wird an Ziel weitergeleitet.")
-        return proxy('v1/models')
+    log("Anfrage an /v1/models empfangen. Antwort wird gesendet.")
+    return jsonify(MODELS_RESPONSE)
 
 @app.route('/<path:path>', methods=['GET', 'POST', 'PUT', 'DELETE', 'PATCH'])
 def proxy(path):
     try:
-        import time
-        
         # Bestimme eingehenden Port (Host-Header hat normalerweise host:port)
         host_header = request.headers.get('Host', '')
         incoming_port = None
@@ -169,15 +99,9 @@ def proxy(path):
         if not incoming_port:
             incoming_port = str(request.environ.get('SERVER_PORT', ''))
 
-        # Für Google API (Port 5003): v1 zu v1beta umwandeln
-        target_path = path
-        if incoming_port == "5003" and path.startswith('v1/'):
-            target_path = 'v1beta/' + path[3:]
-            log(f"Google API Pfad-Mapping: {path} -> {target_path}")
-
         # Wähle die Ziel-URL basierend auf dem Port (oder nutze Default)
         target_base = PORT_TARGET_MAP.get(incoming_port, DEFAULT_TARGET_URL)
-        url = f"{target_base}/{target_path}"
+        url = f"{target_base}/{path}"
         log(f"Leite Anfrage weiter: {request.method} {url} (port={incoming_port})")
 
         # Header vorbereiten und Content-Encoding kontrollieren
@@ -189,32 +113,12 @@ def proxy(path):
             # Accept-Encoding anpassen um Komprimierung zu verhindern
             if key.lower() == 'accept-encoding':
                 continue
-            # Alle anderen Header übernehmen, insbesondere Authorization
             headers[key] = value
-            
-        # Debug-Ausgabe für Authorization-Header bei Port 5002 (OpenAI)
-        if incoming_port == "5002" and DEBUG_MODE:
-            auth_header = headers.get('Authorization', 'Nicht vorhanden')
-            log(f"Authorization-Header für OpenAI-Anfrage: {auth_header[:10]}...")
-            
-        # Für Google API: API-Schlüssel aus Authorization-Header extrahieren und als URL-Parameter verwenden
-        if incoming_port == "5003":
-            auth_header = headers.get('Authorization', 'Nicht vorhanden')
-            log(f"Authorization-Header für Google-Anfrage: {auth_header[:10]}...")
-            
-            # Wenn Authorization-Header vorhanden ist, API-Schlüssel extrahieren
-            if auth_header and auth_header.startswith('Bearer '):
-                api_key = auth_header.split(' ')[1]
-                # URL um API-Schlüssel erweitern
-                if '?' in url:
-                    url += f"&key={api_key}"
-                else:
-                    url += f"?key={api_key}"
-                log("Google API-Schlüssel als URL-Parameter hinzugefügt")
-            
         # Explizit keine Komprimierung anfordern
         headers['Accept-Encoding'] = 'identity'
         data = request.get_data()
+        
+        import time
         
         # Modellname und Parameter aus dem Request extrahieren falls es ein Chat/Completion Request ist
         model_name = None
@@ -224,6 +128,7 @@ def proxy(path):
                 json_data = request.get_json()
                 model_name = json_data.get('model', 'unbekannt')
                 start_time = time.time()
+                
                 
                 # Alle Parameter aus dem Request extrahieren
                 params = []
@@ -249,26 +154,20 @@ def proxy(path):
                 headers=headers,
                 data=data,
                 stream=True,
-                timeout=(10, 600)  # (connect timeout, read timeout) in Sekunden - auf 600 Sekunden erhöht
+                timeout=(5, 300)  # (connect timeout, read timeout) in Sekunden
             )
 
             # Behandle Timeout (504) und andere Fehler
             if resp.status_code != 200:
                 error_msg = f"WARNUNG: Antwort von {request.method} {url} erhielt Status-Code {resp.status_code}"
                 if resp.status_code == 504:
-                    error_msg += " (Gateway Timeout)"
+                    error_msg += " (Gateway Timeout von Monica.im)"
                 print(error_msg)
                 
-                # Versuche die Fehlermeldung zu lesen
+                # Versuche die Fehlermeldung von Monica.im zu lesen
                 try:
                     error_content = resp.json()
-                    log(f"Fehlermeldung vom Zielserver: {error_content}")
-                    # Bei OpenAI API-Schlüsselproblemen detailliertere Ausgabe
-                    if incoming_port == "5002" and resp.status_code == 401:
-                        print(f"FEHLER: OpenAI API-Schlüsselproblem: {error_content}")
-                    # Bei Google API-Schlüsselproblemen
-                    elif incoming_port == "5003" and resp.status_code in [400, 401, 403]:
-                        print(f"FEHLER: Google API-Problem: {error_content}")
+                    log(f"Fehlermeldung von Monica.im: {error_content}")
                 except:
                     pass
 
@@ -322,11 +221,11 @@ def proxy(path):
             return response
 
         except requests.exceptions.Timeout as e:
-            error_msg = f"FEHLER: Zeitüberschreitung nach 600 Sekunden bei Anfrage an {url}"
+            error_msg = f"FEHLER: Zeitüberschreitung nach 240 Sekunden bei Anfrage an {url}"
             print(error_msg)
             return jsonify({
                 "error": "Timeout Error",
-                "message": "Die Anfrage wurde nach 600 Sekunden abgebrochen",
+                "message": "Die Anfrage wurde nach 240 Sekunden abgebrochen",
                 "details": str(e)
             }), 504  # Gateway Timeout
         except requests.exceptions.RequestException as e:
@@ -363,6 +262,7 @@ if __name__ == '__main__':
     
     serve(app, host='0.0.0.0', port=port,
           url_scheme='http', 
-          channel_timeout=600,  # 10 Minuten Timeout für die Verbindung - auf 600 Sekunden erhöht
-          cleanup_interval=600,  # Cleanup alle 10 Minuten - auf 600 Sekunden erhöht
+          channel_timeout=300,  # 5 Minuten Timeout für die Verbindung
+          cleanup_interval=300,  # Cleanup alle 5 Minuten
           threads=8)
+

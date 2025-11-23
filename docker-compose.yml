@@ -14,22 +14,38 @@ services:
     restart: unless-stopped
     
     # Der Befehl, der beim Starten des Containers ausgeführt wird.
-    # Die App im Container lauscht auf Port 5001.
     command: ["python", "monica_proxy.py", "--port", "5001"]
     # Für die Fehlersuche können Sie diesen Befehl verwenden:
     # command: ["python", "monica_proxy.py", "--port", "5001", "--debug"]
+    
+        # Veröffentlicht die Ports des Containers auf dem Host-System
+    ports:
+      - "5001:5001"  # Monica.im API
+      - "5002:5001"  # OpenAI API (intern auf 5001 gemappt)
+      - "5003:5001"  # Google API (intern auf 5001 gemappt)
 
     # Mappt die lokale `models.json` in den Container.
     # Dies stellt sicher, dass Ihre Model-Liste von außen verwaltet werden kann.
     volumes:
       # <Pfad auf dem Host>:<Pfad im Container>:<Zugriffsmodus>
       - ./models.json:/app/models.json:ro
-
-    # Veröffentlicht den Port des Containers auf dem Host-System.
-    # Der Proxy wird über die IP Ihres Servers und diesen Port erreichbar sein.
-    ports:
-      # <Host-Port>:<Container-Port>
-      - "5001:5001"
+    
+    # Resource Limits
+    deploy:
+      resources:
+        limits:
+          cpus: '1.0'
+          memory: 512M
+    
+  # Restart policy is set above
+    
+    # Health check um Container-Status zu überwachen
+    healthcheck:
+      test: ["CMD", "python", "-c", "import urllib.request; urllib.request.urlopen('http://localhost:5001/v1/models', timeout=5)"]
+      interval: 30s
+      timeout: 10s
+      retries: 3
+      start_period: 5s
 
 # In dieser Konfiguration sind keine externen Netzwerke wie das von Traefik erforderlich.
 
